@@ -1,46 +1,70 @@
-// app.js - simplified initializer
+// js/app.js — the single entry point. index.html loads only this file.
 import { renderMenu } from './menu.js';
 import { initOwnerPanel } from './owner.js';
+import { updateButtonsEnabled } from './cart.js';
 import { cart } from './store.js';
-import { data, saveData } from './data.js';
-import { $ } from './utils.js';
+import { data } from './data.js';
+import { $, isOpenNow, nextChangeCountdown } from './utils.js';
 
-// initialize app
 document.addEventListener('DOMContentLoaded', () => {
+  $('#year').textContent = new Date().getFullYear();
   renderMenu();
   initOwnerPanel();
   setupCartButtons();
+  renderOpenStatus();
+
+  // Re-check every minute so the shop opens and closes on its own, without
+  // the page needing a reload at 10 PM.
+  setInterval(() => {
+    renderOpenStatus();
+    updateButtonsEnabled();
+  }, 60000);
 });
 
-function setupCartButtons() {
-  const clearBtn = $('#clearBtn');
-  const orderBtn = $('#orderBtn');
+function renderOpenStatus() {
+  const el = $('#openStatus');
+  if (!el) return;
+  const state = isOpenNow() ? 'Open now (10 PM – 2 AM)' : 'Closed now (opens 10 PM)';
+  el.textContent = `${state} • next change in ${nextChangeCountdown()}`;
+}
 
-  clearBtn?.addEventListener('click', () => {
+function setupCartButtons() {
+  $('#clearBtn')?.addEventListener('click', () => {
     cart.clear();
-    // trigger cart re-render by calling renderMenu (menu renders cart via renderCart)
     renderMenu();
   });
 
-  orderBtn?.addEventListener('click', () => {
+  $('#orderBtn')?.addEventListener('click', () => {
     if (cart.size === 0) {
       alert('Cart is empty.');
       return;
     }
-    // build message
-    let total = 0;
-    let lines = ['New Order from Web:'];
-    for (const [id, qty] of cart.entries()) {
-      const it = data.items.find(i => i.id === id);
-      if (!it) continue;
-      lines.push(`${it.name} x${qty} - ₹${it.price * qty}`);
-      total += it.price * qty;
+    const name = $('#custName')?.value.trim();
+    const room = $('#custRoom')?.value.trim();
+    if (!name || !room) {
+      alert('Please enter your name and room number before ordering.');
+      return;
     }
-    lines.push('Total: ₹' + total);
-    const text = lines.join('\n');
-    const phone = data.wa || '';
-    const phoneDigits = phone.replace(/\D/g,'');
-    const url = `https://api.whatsapp.com/send?phone=${phoneDigits}&text=${encodeURIComponent(text)}`;
+    const url = `https://api.whatsapp.com/send?phone=${String(data.wa || '').replace(/\D/g, '')}`
+      + `&text=${encodeURIComponent(buildOrderMessage(name, room))}`;
     window.open(url, '_blank');
   });
+}
+
+function buildOrderMessage(name, room) {
+  const lines = ['New order', '', `Name: ${name}`, `Room: ${room}`];
+
+  const notes = $('#custNotes')?.value.trim();
+  if (notes) lines.push(`Notes: ${notes}`);
+  lines.push(`Payment: ${$('#custPay')?.value || 'Cash'}`, '', 'Items:');
+
+  let total = 0;
+  for (const [id, qty] of cart.entries()) {
+    const item = data.items.find(i => i.id === id);
+    if (!item) continue;
+    total += item.price * qty;
+    lines.push(`• ${item.name} × ${qty} — ₹${item.price * qty}`);
+  }
+  lines.push('', `Total: ₹${total}`);
+  return lines.join('\n');
 }

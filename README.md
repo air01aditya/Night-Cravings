@@ -39,6 +39,12 @@ python -m http.server 8000
 
 Then open <http://localhost:8000>. A plain file open works too, but a local server is needed for ES modules to load in some browsers.
 
-## Note
+## Known limitations
 
-The menu, contact number and owner PIN in `js/data.js` are configuration — change them before deploying this for your own use.
+**There is no shared state.** Stock levels, prices and the incoming-orders list all live in `localStorage`, which is per-browser. When the owner marks an item sold out, that only changes what *he* sees — every customer's browser still reads the defaults from `js/data.js`. Stock is therefore advisory, not authoritative. Fixing this properly means adding a backend; it is the main thing this project would need next.
+
+**The owner PIN is not security.** It gates the owner panel in one browser and is readable in the source. It stops a curious resident, nothing more.
+
+## Configuration
+
+Open the owner panel and set your own WhatsApp number and PIN on first run. The defaults in `js/data.js` are placeholders — `_pin` ships as `change-me` and should be changed immediately.

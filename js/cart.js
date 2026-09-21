@@ -1,8 +1,7 @@
 // js/cart.js
-import { $, $$, isOpenNow } from './utils.js';
+import { $, $$, isOpenNow, escapeHtml } from './utils.js';
 import { data } from './data.js';
 import { cart } from './store.js';
-
 
 export function renderCart() {
   const c = $('#cart');
@@ -16,10 +15,13 @@ export function renderCart() {
   let total = 0;
   for (const [id, qty] of cart.entries()) {
     const it = data.items.find(i => i.id === id);
+    // The owner can delete an item while it sits in someone's cart; drop it
+    // rather than throwing on a missing price.
+    if (!it) { cart.delete(id); continue; }
     const line = it.price * qty;
     total += line;
     html += `<div class="flex items-center justify-between gap-3">
-      <div class="text-sm">${it.name} × ${qty}</div>
+      <div class="text-sm">${escapeHtml(it.name)} × ${qty}</div>
       <div class="flex items-center gap-2">
         <button data-cartdec="${id}" class="px-2 py-1 rounded border">−</button>
         <button data-cartinc="${id}" class="px-2 py-1 rounded border">+</button>
@@ -36,18 +38,18 @@ export function renderCart() {
 }
 
 function changeCart(id, delta) {
-  const cur = cart.get(id) || 0;
   const it = data.items.find(i => i.id === id);
-  const next = Math.min(it.stock, Math.max(0, cur + delta));
+  if (!it) { cart.delete(id); renderCart(); return; }
+  const next = Math.min(it.stock, Math.max(0, (cart.get(id) || 0) + delta));
   if (next === 0) cart.delete(id); else cart.set(id, next);
   renderCart();
 }
 
 export function updateButtonsEnabled() {
   const open = isOpenNow();
-  const disabled = (!open) || (cart.size === 0) || !validWA();
-  $('#orderBtn').disabled = disabled;
+  const orderBtn = $('#orderBtn');
+  if (orderBtn) orderBtn.disabled = !open || cart.size === 0 || !validWA();
   $$('[data-inc], [data-dec], [data-add]').forEach(b => b.disabled = !open);
 }
 
-function validWA() { return /^\d{8,15}$/.test(data.wa); }
+function validWA() { return /^\d{8,15}$/.test(String(data.wa || '')); }

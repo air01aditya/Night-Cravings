@@ -3,13 +3,22 @@ import { clone } from './utils.js';
 
 export const STORAGE_KEY = 'bh-maggi-v1';
 
+// The PIN only gates the owner panel in this browser — everything lives in
+// localStorage, so it is a convenience lock, not security. Change it from the
+// owner panel on first run.
+export const DEFAULT_PIN = 'change-me';
+
+// Stock is per-browser (see README). A customer's browser never receives the
+// owner's edits, so defaults must be non-zero or nothing can be ordered.
+const DEFAULT_STOCK = 25;
+
 export const defaultData = {
-  _pin: 'Bhargava@2025',
+  _pin: DEFAULT_PIN,
   wa: '916376600488',
   items: [
-    { id: 'plain', name: 'Plain Maggi', price: 30, stock: 0, desc: '' },
-    { id: 'adv1', name: 'Maggi + 1 Compact Advance', price: 37, stock: 0, desc: '' },
-    { id: 'adv2', name: 'Maggi + 2 Compact Advance', price: 45, stock: 0, desc: '' },
+    { id: 'plain', name: 'Plain Maggi', price: 30, stock: DEFAULT_STOCK, desc: '' },
+    { id: 'adv1', name: 'Maggi + 1 Compact Advance', price: 37, stock: DEFAULT_STOCK, desc: '' },
+    { id: 'adv2', name: 'Maggi + 2 Compact Advance', price: 45, stock: DEFAULT_STOCK, desc: '' },
   ],
   incomingOrders: []
 };
