@@ -23,3 +23,9 @@ export function nextChangeCountdown() {
   const mi = diff % 60;
   return `${h}h ${mi}m`;
 }
+
+export function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, ch => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[ch]));
+}
