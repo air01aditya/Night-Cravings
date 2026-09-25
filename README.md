@@ -1,32 +1,34 @@
 # Night Cravings
 
-A client-side ordering system for late-night hostel food and snack orders at **IET DAVV Indore**. No backend, no database, no build pipeline — the entire application is static HTML/CSS/JS, deployable to any static host, with WhatsApp acting as the transactional layer between customer and vendor.
+A client-side ordering system for late-night hostel food and snack orders at IET DAVV Indore. There's no backend, no database and no build pipeline. The whole thing is static HTML, CSS and JavaScript that you can deploy to any static host, and WhatsApp handles the actual back-and-forth between customer and vendor.
 
 ## Overview
 
-The mess kitchen closes hours before demand does. Night Cravings gives a single vendor a lightweight storefront: residents browse a live menu, build a cart, pick a hostel and a payment method, and checkout hands the order off to WhatsApp as a pre-filled message. The vendor runs a PIN-gated admin panel on their own device to manage stock and pricing and to log/confirm/decline orders as they arrive.
+The mess kitchen closes hours before demand does. Night Cravings gives a single vendor a lightweight storefront: residents browse a live menu, build a cart, pick their hostel and a payment method, and checkout hands the order off to WhatsApp as a pre-filled message. The vendor runs a PIN-gated admin panel on their own device to manage stock and pricing, and to log, confirm or decline orders as they come in.
 
-It's intentionally architected around **zero infrastructure**: no server to provision, no API to version, no database to back up. State lives in `localStorage`, and the only outbound integration is a `wa.me` deep link.
+It's built around zero infrastructure on purpose. No server to provision, no API to version, no database to back up. State lives in `localStorage`, and the only outbound integration is a `wa.me` deep link.
 
 ## Architecture
 
-| Concern | Approach |
-|---|---|
-| Rendering | Vanilla DOM manipulation via ES modules — no virtual DOM, no framework runtime |
-| State | Two structures: `cart` (a module-scoped `Map<itemId, quantity>`) and `data` (menu/config/orders, persisted to `localStorage` under `night-cravings-v1`) |
-| Styling | Tailwind (CDN, utility-first, no build step) + a small `style.css` for what utility classes can't express — dialog backdrops, the QR placeholder pattern, scrollbar styling |
-| Checkout | Client-side URL construction against `api.whatsapp.com/send`, order details URL-encoded into the message body |
-| Auth | Plaintext PIN comparison gates the admin `<dialog>` — a single-operator trust model, not a multi-user auth system |
+Rendering is plain DOM manipulation through ES modules, so there's no virtual DOM and no framework runtime to load.
 
-There is no shared runtime between a customer's browser and the vendor's — see [How an order moves through the system](#how-an-order-moves-through-the-system) below for why that's a deliberate constraint, not an oversight.
+State is split into two structures: `cart`, a module-scoped `Map` of item id to quantity, and `data`, which holds the menu, config and orders and gets persisted to `localStorage` under the key `night-cravings-v1`.
+
+Styling is Tailwind loaded from a CDN (utility classes, no build step), plus a small `style.css` for the handful of things utility classes can't express, like dialog backdrops, the QR placeholder pattern and scrollbar styling.
+
+Checkout builds a URL against `api.whatsapp.com/send` with the order details encoded into the message body.
+
+The admin panel is gated by a plain PIN comparison. That's a single-operator trust model, not a real auth system, and it's meant to be exactly that simple.
+
+There's no shared runtime between a customer's browser and the vendor's. See "How an order moves through the system" below for why that's on purpose and not an oversight.
 
 ## Features
 
-- **Live menu with stock-aware cart** — quantity steppers are capped against remaining stock and disabled outside operating hours or when an item is sold out
-- **Time-gated ordering window** — 10 PM–2 AM, enforced client-side and re-evaluated on a 30-second interval
-- **Dual checkout paths** — cash-on-delivery (confirmation modal) or UPI (QR scan + self-reported confirmation), both terminating in a WhatsApp handoff
-- **PIN-gated admin panel** — CRUD on menu items (name/price/stock), and an order queue with Confirm / quick-reason Decline / custom Decline actions
-- **Inventory reconciliation** — stock only decrements on explicit vendor confirmation, never speculatively on order placement (avoids false "sold out" states from abandoned carts)
+- Live menu with a stock-aware cart. Quantity steppers are capped against remaining stock and get disabled outside operating hours or once an item sells out.
+- A time-gated ordering window, 10 PM to 2 AM, enforced client-side and rechecked every 30 seconds.
+- Two checkout paths: cash on delivery with a confirmation modal, or UPI with a QR scan and a self-reported "I've paid." Both end with a WhatsApp handoff.
+- A PIN-gated admin panel for editing menu items (name, price, stock) and working through the order queue: confirm, decline with a quick reason, or decline with a custom one.
+- Inventory only changes when the vendor explicitly confirms an order, never the moment it's placed. That avoids items looking falsely sold out because of an abandoned cart.
 
 ## Project structure
 
@@ -34,28 +36,31 @@ There is no shared runtime between a customer's browser and the vendor's — see
 index.html        markup, layout, both <dialog> modals
 style.css          the handful of things Tailwind utilities can't do
 js/
-  main.js          entry point — wires DOM listeners, drives the 30s open/close tick
-  data.js          single source of truth: menu, hostels, PIN, incoming orders + persistence
-  store.js         the cart (Map<itemId, quantity>), shared by reference across modules
-  menu.js          renders the item grid; owns disabled-state logic (stock × operating hours)
-  cart.js          renders cart contents/total; gates the checkout button
-  payment.js       builds the WhatsApp order message; drives the checkout modal
-  owner.js         admin panel: auth, inventory mutation, order confirm/decline, message parsing
-  utils.js         DOM query helpers, the operating-hours predicate
+  main.js          entry point, wires up DOM listeners and drives the 30s open/close check
+  data.js          the single source of truth: menu, hostels, PIN, incoming orders, persistence
+  store.js         the cart (item id to quantity), shared by reference across modules
+  menu.js          renders the item grid and owns the disabled state logic (stock x hours)
+  cart.js          renders the cart contents and total, and gates the checkout button
+  payment.js       builds the WhatsApp order message and drives the checkout modal
+  owner.js         the admin panel: auth, editing inventory, confirming/declining orders
+  utils.js         DOM helpers and the operating hours check
 ```
 
-Each module has exactly one responsibility and imports only what it needs — there's no central store or event bus; state changes propagate by direct function calls (`renderMenu()` → `renderCart()` → `updateOrderEnabled()`), which keeps the data flow traceable without extra tooling.
+Each file does one job and only imports what it needs. There's no central store or event bus. State changes just propagate through direct function calls, like `renderMenu()` calling `renderCart()` calling `updateOrderEnabled()`, so you can trace what happens by reading the calls, without extra tooling.
 
 ## How an order moves through the system
 
-Because there's no backend, a customer's `localStorage` and the vendor's `localStorage` are two independent, unsynchronized instances — the browser sandbox guarantees this. WhatsApp is what actually bridges them:
+Since there's no backend, a customer's `localStorage` and the vendor's `localStorage` are two separate, unsynced copies. The browser keeps it that way on its own. WhatsApp is what actually bridges the two:
 
-1. Customer adds items client-side; `menu.js` caps quantities against `item.stock` but never mutates it — this is a *soft reservation*, not a hold.
-2. On checkout, `payment.js` serializes the cart into a formatted message and opens a `wa.me` deep link — this message **is** the order; nothing is written back to the vendor's storage yet.
-3. The vendor pastes that same WhatsApp message into **Paste Order** in the admin panel. `addIncomingOrder()` parses it back into a structured object via regex matched against the exact format `payment.js` generates.
-4. **Confirm** decrements `item.stock` for real and timestamps the order. **Decline** leaves inventory untouched (nothing was reserved) and fires a templated WhatsApp reply with the reason.
+A customer adds items on their own device. `menu.js` caps how many they can add against `item.stock`, but it never touches that number. Think of it as a soft reservation rather than an actual hold.
 
-This means inventory is only ever authoritative on the vendor's own device — by design, since there's exactly one vendor.
+At checkout, `payment.js` turns the cart into a formatted message and opens a `wa.me` link. That message is the order. Nothing gets written to the vendor's storage yet.
+
+The vendor pastes that same WhatsApp message into "Paste Order" in the admin panel. `addIncomingOrder()` parses it back into a structured order using a regex that matches the exact format `payment.js` generates.
+
+Confirming an order decrements `item.stock` for real and timestamps it. Declining leaves stock untouched, since nothing was reserved in the first place, and sends a templated WhatsApp reply with the reason.
+
+Because of all this, inventory is only ever accurate on the vendor's own device. That's fine, since there's only one vendor.
 
 ## Running it locally
 
@@ -65,32 +70,33 @@ cd Night-Cravings
 python -m http.server 8000
 ```
 
-Open `http://localhost:8000`. A local server is required (not a `file://` open) because ES modules are fetched via CORS-restricted `import` and some browsers block that from the filesystem.
+Open `http://localhost:8000`. You need a local server rather than opening the file directly, because ES module imports are subject to CORS rules that most browsers block on `file://`.
 
 ## Configuration
 
-All of it lives in `js/data.js`, in the `defaultData` object:
+Everything you'd want to change lives in `js/data.js`, inside the `defaultData` object:
 
-| Key | Purpose |
-|---|---|
-| `wa` | Vendor's WhatsApp number, digits only, country code first |
-| `_pin` | Admin panel PIN — plaintext, appropriate for this threat model, not for anything sensitive |
-| `hostels` | Dropdown options shown on the order form |
-| `items` | Default menu: `id`, `name`, `price`, `stock`, `desc` |
+- `wa` is the vendor's WhatsApp number, digits only, with the country code first.
+- `_pin` is the admin panel PIN. It's plain text, which is fine for this use case but not for anything actually sensitive.
+- `hostels` is the list shown on the order form's hostel dropdown.
+- `items` is the default menu, each with an id, name, price, stock and optional description.
 
-For the UPI flow, replace the placeholder QR block in `payment.js` (`openPaymentModal`) with an `<img>` pointing at your real UPI QR code.
+For the UPI flow, swap the placeholder QR block in `payment.js` (inside `openPaymentModal`) for an `<img>` pointing at your real UPI QR code.
 
 ## Deployment
 
-Static output, so any of these work with zero cost at this scale:
+It's static output, so any of these work for free at this scale:
 
-- **GitHub Pages** — Settings → Pages → deploy from `main`; auto-redeploys on push
-- **Netlify / Vercel / Cloudflare Pages** — connect the repo, same auto-deploy-on-push model, marginally nicer custom-domain tooling
+GitHub Pages: go to Settings, then Pages, and deploy from `main`. It redeploys automatically on every push.
+
+Netlify, Vercel or Cloudflare Pages: connect the repo once and get the same auto-deploy-on-push behavior, with slightly nicer custom domain tooling if you want it.
 
 ## Known constraints
 
-These are scope decisions, not bugs:
+These are choices, not bugs.
 
-- **No cross-device sync.** Stock and order state are per-browser. Fine for one vendor on one device; would need a real backend to support multiple vendors or devices.
-- **External CDN dependency.** Tailwind loads at runtime from `cdn.tailwindcss.com`. If that CDN is unreachable, functionality still works but styling degrades.
-- **No automated tests.** Matches the project's "ship fast, stay small" scope. Worth adding if the feature surface grows.
+There's no cross-device sync. Stock and order state are per-browser, which is fine for one vendor on one device, but you'd need a real backend to support multiple vendors or devices.
+
+There's a runtime dependency on Tailwind's CDN. If `cdn.tailwindcss.com` is ever unreachable, the app still works, it just looks unstyled.
+
+There are no automated tests. That matches the project's goal of staying small and shipping fast. Worth revisiting if the feature set grows.
