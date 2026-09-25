@@ -1,6 +1,12 @@
-# Night Cravings
+# 🌙 Night Cravings
 
-A client-side ordering system for late-night hostel food and snack orders at IET DAVV Indore. There's no backend, no database and no build pipeline. The whole thing is static HTML, CSS and JavaScript that you can deploy to any static host, and WhatsApp handles the actual back-and-forth between customer and vendor.
+**Live:** [air01aditya.github.io/Night-Cravings](https://air01aditya.github.io/Night-Cravings/)
+
+A client-side ordering system for late-night hostel food and snack orders at IET DAVV Indore. No backend, no database, no build pipeline. Just static HTML, CSS and JavaScript that runs from any static host, with WhatsApp doing the actual back-and-forth between customer and vendor.
+
+## The backstory
+
+This started as a real thing, not a portfolio exercise. During exams, one hostel resident used to buy snacks and instant noodles in bulk at a discount and resell them late at night, after the mess had closed and everyone was still awake studying. He'd go live whenever he had stock, take orders by word of mouth, and people would walk over and pay him directly. Night Cravings just puts a menu, a cart and a checkout flow in front of that same idea, so it's a couple of taps on a phone instead of a knock on a door.
 
 ## Overview
 
@@ -18,17 +24,21 @@ Styling is Tailwind loaded from a CDN (utility classes, no build step), plus a s
 
 Checkout builds a URL against `api.whatsapp.com/send` with the order details encoded into the message body.
 
-The admin panel is gated by a plain PIN comparison. That's a single-operator trust model, not a real auth system, and it's meant to be exactly that simple.
+The admin panel is gated by a plain PIN comparison. That's a single operator trust model, not a real auth system, and it's meant to be exactly that simple.
 
 There's no shared runtime between a customer's browser and the vendor's. See "How an order moves through the system" below for why that's on purpose and not an oversight.
 
 ## Features
 
-- Live menu with a stock-aware cart. Quantity steppers are capped against remaining stock and get disabled outside operating hours or once an item sells out.
-- A time-gated ordering window, 10 PM to 2 AM, enforced client-side and rechecked every 30 seconds.
-- Two checkout paths: cash on delivery with a confirmation modal, or UPI with a QR scan and a self-reported "I've paid." Both end with a WhatsApp handoff.
-- A PIN-gated admin panel for editing menu items (name, price, stock) and working through the order queue: confirm, decline with a quick reason, or decline with a custom one.
-- Inventory only changes when the vendor explicitly confirms an order, never the moment it's placed. That avoids items looking falsely sold out because of an abandoned cart.
+Live menu with a stock aware cart. Quantity steppers are capped against remaining stock and get disabled outside operating hours or once an item sells out.
+
+A time gated ordering window, 10 PM to 2 AM, enforced client side and rechecked every 30 seconds.
+
+Two checkout paths: cash on delivery with a confirmation modal, or UPI with a QR scan and a self reported "I've paid." Both end with a WhatsApp handoff.
+
+A PIN gated admin panel for editing menu items (name, price, stock) and working through the order queue: confirm, decline with a quick reason, or decline with a custom one.
+
+Inventory only changes when the vendor explicitly confirms an order, never the moment it's placed. That avoids items looking falsely sold out because of an abandoned cart.
 
 ## Project structure
 
@@ -50,7 +60,7 @@ Each file does one job and only imports what it needs. There's no central store 
 
 ## How an order moves through the system
 
-Since there's no backend, a customer's `localStorage` and the vendor's `localStorage` are two separate, unsynced copies. The browser keeps it that way on its own. WhatsApp is what actually bridges the two:
+Since there's no backend, a customer's `localStorage` and the vendor's `localStorage` are two separate, unsynced copies. The browser keeps it that way on its own. WhatsApp is what actually bridges the two.
 
 A customer adds items on their own device. `menu.js` caps how many they can add against `item.stock`, but it never touches that number. Think of it as a soft reservation rather than an actual hold.
 
@@ -74,28 +84,27 @@ Open `http://localhost:8000`. You need a local server rather than opening the fi
 
 ## Configuration
 
-Everything you'd want to change lives in `js/data.js`, inside the `defaultData` object:
+Everything you'd want to change lives in `js/data.js`, inside the `defaultData` object.
 
-- `wa` is the vendor's WhatsApp number, digits only, with the country code first.
-- `_pin` is the admin panel PIN. It's plain text, which is fine for this use case but not for anything actually sensitive.
-- `hostels` is the list shown on the order form's hostel dropdown.
-- `items` is the default menu, each with an id, name, price, stock and optional description.
+`wa` is the vendor's WhatsApp number, digits only, with the country code first.
+
+`_pin` is the admin panel PIN. It's plain text, which is fine for this use case but not for anything actually sensitive.
+
+`hostels` is the list shown on the order form's hostel dropdown.
+
+`items` is the default menu, each with an id, name, price, stock and optional description.
 
 For the UPI flow, swap the placeholder QR block in `payment.js` (inside `openPaymentModal`) for an `<img>` pointing at your real UPI QR code.
 
 ## Deployment
 
-It's static output, so any of these work for free at this scale:
-
-GitHub Pages: go to Settings, then Pages, and deploy from `main`. It redeploys automatically on every push.
-
-Netlify, Vercel or Cloudflare Pages: connect the repo once and get the same auto-deploy-on-push behavior, with slightly nicer custom domain tooling if you want it.
+This copy is already live on GitHub Pages, redeploying automatically on every push to `main`. If you fork it, Netlify, Vercel and Cloudflare Pages all give you the same free auto-deploy-on-push behavior, just connect the repo.
 
 ## Known constraints
 
 These are choices, not bugs.
 
-There's no cross-device sync. Stock and order state are per-browser, which is fine for one vendor on one device, but you'd need a real backend to support multiple vendors or devices.
+There's no cross device sync. Stock and order state are per browser, which is fine for one vendor on one device, but you'd need a real backend to support multiple vendors or devices.
 
 There's a runtime dependency on Tailwind's CDN. If `cdn.tailwindcss.com` is ever unreachable, the app still works, it just looks unstyled.
 
