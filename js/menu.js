@@ -1,4 +1,4 @@
-// menu.js — draws the item cards. This is the ONE place that decides
+// menu.js: draws the item cards. This is the ONE place that decides
 // whether a card's +/-/Add buttons are clickable (out of stock, or shop closed).
 import { $, $$, isOpenNow } from './utils.js';
 import { data } from './data.js';

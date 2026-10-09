@@ -1,4 +1,4 @@
-// utils.js — small helpers shared across the other files.
+// utils.js: small helpers shared across the other files.
 export const $ = (sel) => document.querySelector(sel);
 export const $$ = (sel) => Array.from(document.querySelectorAll(sel));
 

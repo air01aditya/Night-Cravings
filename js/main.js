@@ -1,4 +1,4 @@
-// js/main.js — entry point, wires everything together
+// js/main.js: entry point, wires everything together
 import { renderMenu } from './menu.js';
 import { renderCart, updateOrderEnabled } from './cart.js';
 import { initOwnerPanel } from './owner.js';
@@ -8,7 +8,7 @@ import { data } from './data.js';
 import { $, $$, isOpenNow } from './utils.js';
 
 document.addEventListener('DOMContentLoaded', () => {
-  document.title = `${data.college} — Night Cravings`;
+  document.title = `${data.college} | Night Cravings`;
   $('#collegeName').textContent = data.college;
   $('#custHostel').innerHTML = data.hostels.map(h => `<option>${h}</option>`).join('');
 

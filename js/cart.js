@@ -1,4 +1,4 @@
-// cart.js — renders the cart list/total and gates the Place Order button.
+// cart.js: renders the cart list/total and gates the Place Order button.
 // It never touches the menu's +/-/Add buttons; menu.js owns those (see disabled there).
 import { $, $$, isOpenNow } from './utils.js';
 import { data } from './data.js';

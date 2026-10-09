@@ -1,4 +1,4 @@
-// js/payment.js — builds the order message and hands off to WhatsApp.
+// js/payment.js: builds the order message and hands off to WhatsApp.
 // No backend: WhatsApp is the source of truth. The owner logs it into the
 // admin panel afterwards via "Paste Order" (see owner.js).
 import { $ } from './utils.js';
@@ -7,7 +7,7 @@ import { cart } from './store.js';
 import { renderMenu } from './menu.js';
 
 function buildOrderText({ name, hostel, notes, payment }) {
-  const lines = [`New order — ${data.college}`, `Name: ${name}`, `Hostel: ${hostel}`];
+  const lines = [`New order: ${data.college}`, `Name: ${name}`, `Hostel: ${hostel}`];
   let total = 0;
   for (const [id, qty] of cart.entries()) {
     const it = data.items.find(i => i.id === id);
@@ -56,7 +56,7 @@ export function openPaymentModal(order) {
         Replace with your UPI QR image
       </div>
       <p class="text-xs text-stone-500 mt-3">Paid? Tap below to notify on WhatsApp.</p>
-      <button id="confirmSendBtn" class="mt-3 w-full px-4 py-3 rounded-xl bg-green-600 text-white font-medium">I've Paid — Notify on WhatsApp</button>
+      <button id="confirmSendBtn" class="mt-3 w-full px-4 py-3 rounded-xl bg-green-600 text-white font-medium">I've Paid, Notify on WhatsApp</button>
     `;
   }
 

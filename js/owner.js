@@ -1,9 +1,9 @@
-// owner.js — everything behind the PIN: edit menu/stock, and log/confirm/decline orders.
+// owner.js: everything behind the PIN: edit menu/stock, and log/confirm/decline orders.
 import { $, $$ } from './utils.js';
 import { data, saveData, defaultData } from './data.js';
 import { renderMenu } from './menu.js';
 
-const QUICK_DECLINE_REASONS = ['Items not enough', 'Power out — can\'t cook', 'Closed for tonight'];
+const QUICK_DECLINE_REASONS = ['Items not enough', 'Power out, can\'t cook', 'Closed for tonight'];
 
 export function initOwnerPanel() {
   const ownerBtn = $('#ownerBtn');
@@ -188,7 +188,7 @@ function declineOrder(orderId, reason) {
   let phone = o.fromPhone || prompt('Customer phone (digits only) to send decline message to:') || '';
   phone = phone.replace(/\D/g, '');
   if (!phone) return;
-  const text = `Hi ${o.name || ''}, sorry — ${reason}.`;
+  const text = `Hi ${o.name || ''}, sorry, ${reason}.`;
   window.open(`https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(text)}`, '_blank');
 }
 
@@ -209,7 +209,7 @@ export function addIncomingOrder(raw) {
   };
 
   for (const l of lines) {
-    // Matches "Item name x2 = ₹60" — the exact line format payment.js writes.
+    // Matches "Item name x2 = ₹60", the exact line format payment.js writes.
     // Greedy .+ grabs as much as possible then backs off to the LAST " x123 = ₹456",
     // so it still works even if an item's own name happens to contain the letter "x".
     const m = l.match(/^(.+) x(\d+) = ₹(\d+)$/);

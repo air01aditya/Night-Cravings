@@ -1,18 +1,18 @@
-# 🌙 Night Cravings
+# Night Cravings
 
 **Live:** [air01aditya.github.io/Night-Cravings](https://air01aditya.github.io/Night-Cravings/)
 
-A client-side ordering system for late-night hostel food and snack orders at IET DAVV Indore. No backend, no database, no build pipeline. Just static HTML, CSS and JavaScript that runs from any static host, with WhatsApp doing the actual back-and-forth between customer and vendor.
+A small ordering website for late-night hostel snack orders at IET DAVV Indore. It is plain HTML, CSS and JavaScript with no server or database, and orders reach the seller over WhatsApp.
 
 ## The backstory
 
-This started as a real thing, not a portfolio exercise. During exams, one hostel resident used to buy snacks and instant noodles in bulk at a discount and resell them late at night, after the mess had closed and everyone was still awake studying. He'd go live whenever he had stock, take orders by word of mouth, and people would walk over and pay him directly. Night Cravings just puts a menu, a cart and a checkout flow in front of that same idea, so it's a couple of taps on a phone instead of a knock on a door.
+This started from a real need. During exams, one hostel resident used to buy snacks and instant noodles in bulk at a discount and resell them late at night, after the mess had closed and everyone was still awake studying. He'd go live whenever he had stock, take orders by word of mouth, and people would walk over and pay him directly. Night Cravings just puts a menu, a cart and a checkout flow in front of that same idea, so it's a couple of taps on a phone instead of a knock on a door.
 
 ## Overview
 
-The mess kitchen closes hours before demand does. Night Cravings gives a single vendor a lightweight storefront: residents browse a live menu, build a cart, pick their hostel and a payment method, and checkout hands the order off to WhatsApp as a pre-filled message. The vendor runs a PIN-gated admin panel on their own device to manage stock and pricing, and to log, confirm or decline orders as they come in.
+The mess kitchen closes hours before demand does. Night Cravings gives a single vendor a simple online shop: residents browse a live menu, build a cart, pick their hostel and a payment method, and checkout hands the order off to WhatsApp as a pre-filled message. The vendor runs a PIN-gated admin panel on their own device to manage stock and pricing, and to log, confirm or decline orders as they come in.
 
-It's built around zero infrastructure on purpose. No server to provision, no API to version, no database to back up. State lives in `localStorage`, and the only outbound integration is a `wa.me` deep link.
+I kept it free of servers so there is nothing to host or pay for. State lives in `localStorage`, and the only outbound integration is a `wa.me` deep link.
 
 ## Architecture
 
@@ -26,7 +26,7 @@ Checkout builds a URL against `api.whatsapp.com/send` with the order details enc
 
 The admin panel is gated by a plain PIN comparison. That's a single operator trust model, not a real auth system, and it's meant to be exactly that simple.
 
-There's no shared runtime between a customer's browser and the vendor's. See "How an order moves through the system" below for why that's on purpose and not an oversight.
+The customer's browser and the vendor's browser don't share any data. "How an order moves through the system" below explains how WhatsApp connects them.
 
 ## Features
 
@@ -60,9 +60,9 @@ Each file does one job and only imports what it needs. There's no central store 
 
 ## How an order moves through the system
 
-Since there's no backend, a customer's `localStorage` and the vendor's `localStorage` are two separate, unsynced copies. The browser keeps it that way on its own. WhatsApp is what actually bridges the two.
+Since there's no backend, a customer's `localStorage` and the vendor's `localStorage` are two separate, unsynced copies. The browser keeps it that way on its own. WhatsApp connects the two.
 
-A customer adds items on their own device. `menu.js` caps how many they can add against `item.stock`, but it never touches that number. Think of it as a soft reservation rather than an actual hold.
+A customer adds items on their own device. `menu.js` caps how many they can add against `item.stock`, but it never touches that number. So adding an item to the cart does not hold stock.
 
 At checkout, `payment.js` turns the cart into a formatted message and opens a `wa.me` link. That message is the order. Nothing gets written to the vendor's storage yet.
 
@@ -88,7 +88,7 @@ Everything you'd want to change lives in `js/data.js`, inside the `defaultData` 
 
 `wa` is the vendor's WhatsApp number, digits only, with the country code first.
 
-`_pin` is the admin panel PIN. It's plain text, which is fine for this use case but not for anything actually sensitive.
+`_pin` is the admin panel PIN. It's plain text, which is fine for this use case but not for anything sensitive.
 
 `hostels` is the list shown on the order form's hostel dropdown.
 
@@ -102,10 +102,10 @@ This copy is already live on GitHub Pages, redeploying automatically on every pu
 
 ## Known constraints
 
-These are choices, not bugs.
+I kept it simple, so it has these limits.
 
 There's no cross device sync. Stock and order state are per browser, which is fine for one vendor on one device, but you'd need a real backend to support multiple vendors or devices.
 
 There's a runtime dependency on Tailwind's CDN. If `cdn.tailwindcss.com` is ever unreachable, the app still works, it just looks unstyled.
 
-There are no automated tests. That matches the project's goal of staying small and shipping fast. Worth revisiting if the feature set grows.
+There are no automated tests. I'd add them if the app grows.

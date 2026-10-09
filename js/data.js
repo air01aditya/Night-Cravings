@@ -1,11 +1,11 @@
-// data.js — the app's one source of truth: menu, hostels, PIN, incoming orders.
+// data.js: the app's one source of truth: menu, hostels, PIN, incoming orders.
 // Everything lives in `data` and is saved to localStorage after every change.
 import { clone } from './utils.js';
 
 export const STORAGE_KEY = 'night-cravings-v1';
 
-// Everything below is placeholder config. Change wa/_pin before deploying —
-// see README for why the originals must never be committed to a public repo.
+// Everything below is placeholder config. Change wa/_pin before deploying.
+// See README for why the originals must never be committed to a public repo.
 export const defaultData = {
   _pin: 'changeme123',
   wa: '910000000000',
