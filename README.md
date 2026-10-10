@@ -2,6 +2,8 @@
 
 **Live:** [air01aditya.github.io/Night-Cravings](https://air01aditya.github.io/Night-Cravings/)
 
+![Night Cravings menu and order form](docs/screenshot.png)
+
 A small ordering website for late-night hostel snack orders at IET DAVV Indore. It is plain HTML, CSS and JavaScript with no server or database, and orders reach the seller over WhatsApp.
 
 ## The backstory
